@@ -14,13 +14,15 @@ Kaggle / Zenodo / AWS Open Data) and serve it on your own hardware.
   [FPSim2](https://github.com/chembl/FPSim2) (MIT, EMBL-EBI) — popcount-bounds
   pruning over a memory-mapped fingerprint database. Deterministic: same SMILES
   in, same result out, no model drift.
-- **In-memory mode** — full FP db in RAM. The flagship "full corpus, fast,
-  exact" path. **Latency is threshold-dependent** (tighter thresholds prune far
-  more): measured on a ~40M index on one r6i.4xlarge, median query time was
-  **65 ms at threshold 0.9, 283 ms at 0.7, 791 ms at 0.5**. Sub-second at the
-  thresholds people actually search (≥0.7); query time grows roughly linearly
-  with corpus size, so at the full 122M a loose 0.5-threshold search is a few
-  seconds, not sub-second. RAM scales with the FP set (~31 GB at 122M).
+- **In-memory mode** — the full FP database in RAM (measured: 31.2 GB peak, 16.2 GB
+  index on disk, ~90 s load). **Latency is threshold-dependent**, and exact Tanimoto
+  does not prune the way an approximate ANN index does, so full-scale query time is a
+  few seconds. Measured on the **full 122M index** over a 50-SMILES corpus query set,
+  p50 / p95 were **0.88 s / 1.16 s at threshold 0.9, 1.67 s / 2.11 s at 0.8, and
+  2.50 s / 2.95 s at 0.7**. The tradeoff is deliberate: exact and deterministic (same
+  SMILES, same neighbors, every run) at a few seconds, rather than approximate and
+  drifting at milliseconds. Provenance: r6i.2xlarge, FPSim2 0.7.4, RDKit 2026.03.1,
+  2026-09-09.
 - **On-disk mode** — for machines that can't hold it in RAM; much slower per
   query, so it ships as a batch/slice path, not behind an interactive card.
 
